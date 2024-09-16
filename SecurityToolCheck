@@ -1,0 +1,52 @@
+<# A script to check client connectivitiy to INfoSec management servers #>
+#
+#$logdir = $ENV:winder
+#$log = $ENV:windir"SymantecClientCheck.log"
+$log = "C:\temp\InfoSecClientCheck.log"
+#Checking SCCM connectivitiy
+Write-Host "Check connectivity to SCCM Management servers" >> $log
+$SCCMSVRS = @('SERVERNAMEs HERE )
+forEach ($SCCM in $SCCMSVRS){
+    $portsccm = 80,443
+    foreach ($portccm in $portsccm){
+        Test-NetConnection -ComputerName $SCCM -port $portccm >> $log
+        }
+    }
+# End SCCM
+#Checking End-Point connections
+Write-Host "Checking Symantec end point management serverports" >> $log
+$SEPSVRS = @('SERVERNAMES here')
+forEach ($server in $SEPSVRS){
+    Write-Host "test server $server"
+    $ports = @('443','2967','2968','8014')
+    foreach ($port in $ports){
+        Write-Host "testing $server on port $port"
+        Test-NetConnection -ComputerName $server -port $port >> $log
+        }
+    }
+#
+#Start DCSSA client checks
+Write-Host "Checking DCSSA connectivity to management server" >> $log
+Test-NetConnection -ComputerName SERVERNAME Here -port 443|select-Object TcptestSucceeded >> $log
+#
+#Check if ports are listening
+Write-Host "Checking DCSSA is listening for Management servers" >>  $log
+Get-NetTCPConnection -State Listen | Where-Object {$_.LocalPort -eq "2222"} >> $log
+#
+# Check if services are running
+# SCCM
+Write-Host "Checking SCCM Service status" >> $log
+get-service -name 'sms agent host' >> $log
+#
+# Symantec End-Point Protection
+Write-Host "Checking Symantec End Point status" >> $log
+get-service -name 'sepmasterservice' >> $log
+get-service -name 'SNAC' >> $log
+#
+# symantec DCSSA
+Write-Host "Checking Symantec End Point status" >> $log
+get-service -name 'SISIPSUtil' >> $log
+get-service -name 'SISIDSService' >> $log
+get-service -name 'SISIPSService' >> $log
+#
+Write-Host "End InfoSec config Check" >> $log
